@@ -1,16 +1,13 @@
 "use server"
 
-import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { motorcycles } from "@/lib/db/schema"
-import { and, desc, eq } from "drizzle-orm"
-import { headers } from "next/headers"
+import { desc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { hasValidSession } from "@/lib/session"
 
-async function getUserId() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user) throw new Error("Unauthorized")
-  return session.user.id
+async function requireSession() {
+  if (!(await hasValidSession())) throw new Error("Unauthorized")
 }
 
 export type MotorcycleInput = {
@@ -27,7 +24,7 @@ export type MotorcycleInput = {
   featured?: boolean
 }
 
-// Public: read every listing for the gallery (no user scoping — the gallery is public).
+// Public: read every listing for the gallery (no auth — the gallery is public).
 export async function getPublicMotorcycles() {
   return db
     .select()
@@ -35,20 +32,15 @@ export async function getPublicMotorcycles() {
     .orderBy(desc(motorcycles.featured), desc(motorcycles.createdAt))
 }
 
-// Admin: read only the signed-in curator's listings.
+// Admin: single curator, so this just returns everything.
 export async function getMyMotorcycles() {
-  const userId = await getUserId()
-  return db
-    .select()
-    .from(motorcycles)
-    .where(eq(motorcycles.userId, userId))
-    .orderBy(desc(motorcycles.createdAt))
+  await requireSession()
+  return db.select().from(motorcycles).orderBy(desc(motorcycles.createdAt))
 }
 
 export async function createMotorcycle(input: MotorcycleInput) {
-  const userId = await getUserId()
+  await requireSession()
   await db.insert(motorcycles).values({
-    userId,
     title: input.title,
     make: input.make || null,
     model: input.model || null,
@@ -66,7 +58,7 @@ export async function createMotorcycle(input: MotorcycleInput) {
 }
 
 export async function updateMotorcycle(id: number, input: MotorcycleInput) {
-  const userId = await getUserId()
+  await requireSession()
   await db
     .update(motorcycles)
     .set({
@@ -83,26 +75,24 @@ export async function updateMotorcycle(id: number, input: MotorcycleInput) {
       featured: input.featured ?? false,
       updatedAt: new Date(),
     })
-    .where(and(eq(motorcycles.id, id), eq(motorcycles.userId, userId)))
+    .where(eq(motorcycles.id, id))
   revalidatePath("/")
   revalidatePath("/admin")
 }
 
 export async function deleteMotorcycle(id: number) {
-  const userId = await getUserId()
-  await db
-    .delete(motorcycles)
-    .where(and(eq(motorcycles.id, id), eq(motorcycles.userId, userId)))
+  await requireSession()
+  await db.delete(motorcycles).where(eq(motorcycles.id, id))
   revalidatePath("/")
   revalidatePath("/admin")
 }
 
 export async function toggleFeatured(id: number, featured: boolean) {
-  const userId = await getUserId()
+  await requireSession()
   await db
     .update(motorcycles)
     .set({ featured, updatedAt: new Date() })
-    .where(and(eq(motorcycles.id, id), eq(motorcycles.userId, userId)))
+    .where(eq(motorcycles.id, id))
   revalidatePath("/")
   revalidatePath("/admin")
 }

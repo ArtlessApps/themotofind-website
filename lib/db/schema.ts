@@ -1,63 +1,11 @@
 import { pgTable, text, timestamp, boolean, serial, integer } from "drizzle-orm/pg-core"
 
-// --- Better Auth required tables -------------------------------------------
-// Column names are camelCase to match Better Auth's defaults. Do not rename.
-
-export const user = pgTable("user", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  emailVerified: boolean("emailVerified").notNull().default(false),
-  image: text("image"),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
-})
-
-export const session = pgTable("session", {
-  id: text("id").primaryKey(),
-  expiresAt: timestamp("expiresAt").notNull(),
-  token: text("token").notNull().unique(),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
-  ipAddress: text("ipAddress"),
-  userAgent: text("userAgent"),
-  userId: text("userId")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-})
-
-export const account = pgTable("account", {
-  id: text("id").primaryKey(),
-  accountId: text("accountId").notNull(),
-  providerId: text("providerId").notNull(),
-  userId: text("userId")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  accessToken: text("accessToken"),
-  refreshToken: text("refreshToken"),
-  idToken: text("idToken"),
-  accessTokenExpiresAt: timestamp("accessTokenExpiresAt"),
-  refreshTokenExpiresAt: timestamp("refreshTokenExpiresAt"),
-  scope: text("scope"),
-  password: text("password"),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
-})
-
-export const verification = pgTable("verification", {
-  id: text("id").primaryKey(),
-  identifier: text("identifier").notNull(),
-  value: text("value").notNull(),
-  expiresAt: timestamp("expiresAt").notNull(),
-  createdAt: timestamp("createdAt").defaultNow(),
-  updatedAt: timestamp("updatedAt").defaultNow(),
-})
-
-// --- App tables ------------------------------------------------------------
+// --- Gallery -----------------------------------------------------------
+// Motorcycles manually curated onto the public site. Single admin — no
+// per-user ownership.
 
 export const motorcycles = pgTable("motorcycles", {
   id: serial("id").primaryKey(),
-  userId: text("userId").notNull(),
   title: text("title").notNull(),
   make: text("make"),
   model: text("model"),
@@ -74,3 +22,37 @@ export const motorcycles = pgTable("motorcycles", {
 })
 
 export type Motorcycle = typeof motorcycles.$inferSelect
+
+// --- Scraper curation ----------------------------------------------------
+// Mirrors the schema the local MotoFinds scraper pipeline (motofinds/) writes
+// to. Column names are snake_case to match what the Python side writes via
+// raw SQL — do not rename without updating motofinds/database/db.py.
+
+export const listings = pgTable("listings", {
+  id: serial("id").primaryKey(),
+  url: text("url").notNull().unique(),
+  platform: text("platform").notNull(),
+  title: text("title"),
+  price: integer("price"),
+  location: text("location"),
+  year: integer("year"),
+  make: text("make"),
+  model: text("model"),
+  mileage: integer("mileage"),
+  description: text("description"),
+  imageUrls: text("image_urls"),
+  rawData: text("raw_data"),
+  scrapedAt: timestamp("scraped_at", { withTimezone: true }).notNull().defaultNow(),
+
+  aiScore: integer("ai_score"),
+  aiFlagged: boolean("ai_flagged").notNull().default(false),
+  aiReason: text("ai_reason"),
+  aiCategory: text("ai_category"),
+  scoredAt: timestamp("scored_at", { withTimezone: true }),
+
+  status: text("status").notNull().default("pending"),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  notes: text("notes"),
+})
+
+export type Listing = typeof listings.$inferSelect

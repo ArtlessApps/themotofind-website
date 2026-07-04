@@ -10,14 +10,13 @@ import {
   toggleFeatured,
   type MotorcycleInput,
 } from "@/app/actions/motorcycles"
-import { authClient } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
-import { Pencil, Trash2, Plus, X, Star, LogOut, ExternalLink } from "lucide-react"
+import { Pencil, Trash2, Plus, X, Star, ExternalLink } from "lucide-react"
 
 const empty: MotorcycleInput = {
   title: "",
@@ -35,10 +34,8 @@ const empty: MotorcycleInput = {
 
 export function AdminManager({
   initialBikes,
-  userName,
 }: {
   initialBikes: Motorcycle[]
-  userName: string
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -121,35 +118,9 @@ export function AdminManager({
     })
   }
 
-  async function handleSignOut() {
-    await authClient.signOut()
-    router.push("/sign-in")
-    router.refresh()
-  }
-
   return (
-    <div className="min-h-svh bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <span className="font-serif text-xl tracking-tight text-foreground">
-              Curator Studio
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="hidden text-sm text-muted-foreground sm:inline">
-              {userName}
-            </span>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-        <div className="mb-8 flex items-end justify-between gap-4">
+    <div>
+      <div className="mb-8 flex items-end justify-between gap-4">
           <div>
             <h1 className="font-serif text-3xl tracking-tight text-foreground">
               Your Listings
@@ -249,7 +220,6 @@ export function AdminManager({
             })}
           </ul>
         )}
-      </main>
 
       {formOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-background/80 p-4 backdrop-blur-sm">
