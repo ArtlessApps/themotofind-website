@@ -14,6 +14,7 @@ export const motorcycles = pgTable("motorcycles", {
   location: text("location"),
   mileage: text("mileage"),
   description: text("description"),
+  instagramUrl: text("instagramUrl"),
   imageUrl: text("imageUrl").notNull(),
   listingUrl: text("listingUrl").notNull(),
   featured: boolean("featured").notNull().default(false),
