@@ -12,7 +12,7 @@ export function MotorcycleCard({ bike }: { bike: Motorcycle }) {
       <img
         src={bike.imageUrl || "/placeholder.svg"}
         alt=""
-        className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        className="aspect-[4/5] w-full object-cover transition-transform duration-500 group-hover:scale-105"
       />
     </a>
   )
