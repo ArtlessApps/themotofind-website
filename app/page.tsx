@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import Link from "next/link"
 import { getPublicMotorcycles } from "@/app/actions/motorcycles"
 import { SiteHeader } from "@/components/site-header"
