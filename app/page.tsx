@@ -2,16 +2,21 @@ export const dynamic = "force-dynamic"
 
 import Link from "next/link"
 import { getPublicMotorcycles } from "@/app/actions/motorcycles"
+import { isSubscribed } from "@/lib/subscriber"
 import { SiteHeader } from "@/components/site-header"
-import { MotorcycleCard } from "@/components/motorcycle-card"
+import { GatedGallery } from "@/components/gated-gallery"
+import { SubscribeForm } from "@/components/subscribe-form"
 import { InstagramIcon } from "@/components/instagram-icon"
 
 export default async function HomePage() {
-  const bikes = await getPublicMotorcycles()
+  const [bikes, subscribed] = await Promise.all([
+    getPublicMotorcycles(),
+    isSubscribed(),
+  ])
 
   return (
     <div className="min-h-svh bg-background">
-      <SiteHeader />
+      <SiteHeader isSubscribed={subscribed} />
 
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-border">
@@ -79,11 +84,7 @@ export default async function HomePage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {bikes.map((bike) => (
-              <MotorcycleCard key={bike.id} bike={bike} />
-            ))}
-          </div>
+          <GatedGallery bikes={bikes} isSubscribed={subscribed} />
         )}
       </section>
 
@@ -100,14 +101,18 @@ export default async function HomePage() {
             Join the list for a hand-picked roundup of the most interesting
             motorcycles for sale, straight from the feed.
           </p>
-          <a
-            href="https://themotofind.beehiiv.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            Subscribe to the newsletter
-          </a>
+          {subscribed ? (
+            <p className="text-sm font-medium text-primary">
+              ✓ You&apos;re subscribed — thanks for riding with us.
+            </p>
+          ) : (
+            <SubscribeForm
+              source="bottom-cta"
+              next="/#gallery"
+              buttonLabel="Subscribe to the newsletter"
+              className="w-full max-w-md"
+            />
+          )}
         </div>
       </section>
 
